@@ -9,11 +9,11 @@ import Typography from '@mui/material/Typography';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { logout } from '../service/utils';
+import { getJwt, logout } from '../service/utils';
 import LoginIcon from '@mui/icons-material/Login';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import Tooltip from '@mui/material/Tooltip';
-import { checkoutCart } from '../service/api-service';
+import { checkoutCart, getCartItems } from '../service/api-service';
 import Snackbar from '@mui/material/Snackbar';
 
 
@@ -48,13 +48,33 @@ function stringAvatar(name: string) {
 
 
 export default function NavAppbar(props) {
+    let options = [
+        'None',
+        'Atria',
+        'Callisto',
+        'Dione',
+        'Ganymede',
+        'Hangouts Call',
+        'Luna',
+        'Oberon',
+        'Phobos',
+        'Pyxis',
+        'Sedna',
+        'Titania',
+        'Triton',
+        'Umbriel',
+    ];
+
     const isLoggedIn = props.isLoggedIn;
     console.log(isLoggedIn, "  adada")
     const history = useHistory();
     const [anchorEl, setAnchorEl] = React.useState(null);
+    const [anchorElCart, setAnchorElCart] = React.useState(null);
+
     const [openSnack, setOpenSnack] = React.useState(false);
 
     const open = Boolean(anchorEl);
+    const openCart = Boolean(anchorElCart);
 
     const handleSnackClose = () => {
         setOpenSnack(false);
@@ -63,6 +83,20 @@ export default function NavAppbar(props) {
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
     };
+
+    const handleCartClick = (event) => {
+        setAnchorElCart(event.currentTarget);
+        if (getJwt()) {
+            getCartItems().then((response) => {
+                options = response.data;
+            });
+        }
+    };
+
+    const handleCloseCart = () => {
+        setAnchorElCart(null);
+    };
+
     const handleClose = () => {
         setAnchorEl(null);
     };
@@ -83,6 +117,9 @@ export default function NavAppbar(props) {
         })
     }
 
+
+
+    const ITEM_HEIGHT = 48;
     return (
         <>
             <Box sx={{ flexGrow: 1 }}>
@@ -91,8 +128,8 @@ export default function NavAppbar(props) {
                         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                             SHOPPING-PORTAL
                         </Typography>
-                        <Tooltip title="Checkout"><IconButton color="inherit"><AddShoppingCartIcon /></IconButton></Tooltip>
-                        <Tooltip title="cart"><IconButton color="inherit"><ShoppingCartIcon /></IconButton></Tooltip>
+                        <Tooltip title="Checkout"><IconButton color="inherit" onClick={() => checkOutItem()}><AddShoppingCartIcon /></IconButton></Tooltip>
+                        <Tooltip title="cart"><IconButton color="inherit" onClick={(event) => handleCartClick(event)}><ShoppingCartIcon /></IconButton></Tooltip>
                         {isLoggedIn ? <Avatar style={{ cursor: 'pointer' }} onClick={(event) => handleClick(event)} {...stringAvatar('Sagar Jain')} /> : <LoginIcon />}
                         <Menu id="demo-positioned-menu"
                             aria-labelledby="demo-positioned-button"
@@ -110,6 +147,27 @@ export default function NavAppbar(props) {
                         >
                             <MenuItem onClick={handleClose}>My Order</MenuItem>
                             <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                        </Menu>
+                        <Menu
+                            id="long-menu"
+                            MenuListProps={{
+                                'aria-labelledby': 'long-button',
+                            }}
+                            anchorEl={anchorElCart}
+                            open={openCart}
+                            onClose={handleCloseCart}
+                            PaperProps={{
+                                style: {
+                                    maxHeight: ITEM_HEIGHT * 4.5,
+                                    width: '20ch',
+                                },
+                            }}
+                        >
+                            {options.map((option) => (
+                                <MenuItem key={option} selected={option === 'Pyxis'} onClick={handleCloseCart}>
+                                    {option}
+                                </MenuItem>
+                            ))}
                         </Menu>
                     </Toolbar>
                 </AppBar>
