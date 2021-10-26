@@ -28,31 +28,10 @@ const elev = 24;
 
 class Clip extends React.Component {
     state = {
-        items: [
-            {
-                "name": "Lynn Pearson",
-                "id": 7
-            },
-            {
-                "name": "Paki Moody",
-                "id": 8
-            },
-            {
-                "name": "Basia Sears",
-                "id": 9
-            },
-            {
-                "name": "Nicholas Garrett",
-                "id": 6
-            },
-            {
-                "name": "Francis Trujillo",
-                "id": 4
-            }
-        ],
+        items: [],
         limit: 0,
         requireMoreScroll: false,
-        cart: [],
+        cart: [{ ItemId: 0, Name: '' }],
         addCart: false
     }
 
@@ -69,8 +48,8 @@ class Clip extends React.Component {
         getAllItems(this.state.items.length).then((response) => {
             if (response.data !== undefined || response.data !== null) {
                 let dataArray = this.state.items;
-                dataArray = dataArray.concat(response.data.items);
-                const requireBoolean = dataArray.length === response.data.total ? false : true;
+                dataArray = dataArray.concat(response.data.Items);
+                const requireBoolean = dataArray.length === response.data.Total ? false : true;
                 this.setState({ items: dataArray, limit: response.data.total, requireMoreScroll: requireBoolean });
             }
         }).catch();
@@ -83,6 +62,7 @@ class Clip extends React.Component {
 
     componentDidUpdate(prevState) {
         console.log('update called')
+        console.log('d  ', this.state.cart?.filter(e => e.ItemId === 2).length)
         if (this.state.items !== prevState.items || this.state.requireMoreScroll !== prevState.requireMoreScroll) {
             console.log('update with changes ')
             console.log(this.state)
@@ -93,12 +73,12 @@ class Clip extends React.Component {
     }
 
     addToCart(id) {
-        // console.log('filter', id);
-        // let array = this.state.cart;
-        // array = array.concat(id);
-        // this.setState({ cart: array });
         addToCart(id).then((res) => {
-            this.setState({ addCart: true });
+            addToCart(id).then((res) => {
+                if (res.status == 200) {
+                    this.setState({ addCart: true });
+                }
+            });
             this.callCartsItemService();
         });
     }
@@ -133,7 +113,7 @@ class Clip extends React.Component {
                             dataLength={this.state.items.length}
                             next={this.callItemService.bind(this)}
                             hasMore={this.state.requireMoreScroll}
-                            loader={<ShopLoader />}
+                            loader={<div style={{ marginLeft: '850px' }}><ShopLoader /></div>}
                             endMessage={
                                 <h2 style={{
                                     color: 'gray',
@@ -156,13 +136,13 @@ class Clip extends React.Component {
                                     },
                                 }}
                             >
-                                {this.state.items.map((elevation: ItemModel) => (
-                                    <Item key={elevation.name} elevation={elev} style={{ backgroundColor: this.getRandomColor() }}>
-                                        <Typography variant="h5" gutterBottom component="div">
-                                            {elevation.name}
+                                {this.state.items?.map((elevation: ItemModel) => (
+                                    <Item key={elevation.Name} elevation={elev} style={{ backgroundColor: this.getRandomColor() }}>
+                                        <Typography variant="body2" gutterBottom component="div">
+                                            {elevation.Name}
                                         </Typography>
-                                        {!this.state.cart.includes(elevation.id as never) ?
-                                            <Button variant="contained" endIcon={<AddShoppingCartIcon />} onClick={() => this.addToCart(elevation.id)}>
+                                        {((this.state.cart?.filter(e => e.ItemId === elevation.ID) === undefined) || (this.state.cart?.filter(e => e.ItemId === elevation.ID).length === 0)) ?
+                                            <Button variant="contained" endIcon={<AddShoppingCartIcon />} onClick={this.addToCart.bind(this, elevation.ID)}>
                                                 Add
                                             </Button>
                                             :

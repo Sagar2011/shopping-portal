@@ -13,9 +13,13 @@ import { getJwt, logout } from '../service/utils';
 import LoginIcon from '@mui/icons-material/Login';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import Tooltip from '@mui/material/Tooltip';
-import { checkoutCart, getCartItems } from '../service/api-service';
+import { checkoutCart, getCartItems, getOrderHistory } from '../service/api-service';
 import Snackbar from '@mui/material/Snackbar';
-
+import Modal from '@mui/material/Modal';
+import Fade from '@mui/material/Fade';
+import Backdrop from '@mui/material/Backdrop';
+import { Divider } from '@mui/material';
+import { OrderModel } from '../models/model';
 
 function stringToColor(string: string) {
     let hash = 0;
@@ -46,32 +50,45 @@ function stringAvatar(name: string) {
     };
 }
 
+const style = {
+    position: 'absolute' as 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+};
 
-export default function NavAppbar(props) {
-    let options = [
-        'None',
-        'Atria',
-        'Callisto',
-        'Dione',
-        'Ganymede',
-        'Hangouts Call',
-        'Luna',
-        'Oberon',
-        'Phobos',
-        'Pyxis',
-        'Sedna',
-        'Titania',
-        'Triton',
-        'Umbriel',
-    ];
+export default function NavAppbar() {
 
-    const isLoggedIn = props.isLoggedIn;
-    console.log(isLoggedIn, "  adada")
+    const [loggedIn, setLoggedIn] = React.useState(getJwt() !== null);
+
     const history = useHistory();
+
+    const [openModal, setOpenModal] = React.useState(false);
+
+    const [modal, setModal] = React.useState([]);
+
+    const handleModalOpen = () => {
+        setOpenModal(true);
+        getOrderHistory().then((res) => {
+            if (res.status == 200) {
+                setModal(res.data);
+            }
+        });
+    }
+    const handleModalClose = () => setOpenModal(false);
+
+    const [options, setOptions] = React.useState([{ ItemId: 0, Name: '' }]);
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [anchorElCart, setAnchorElCart] = React.useState(null);
 
     const [openSnack, setOpenSnack] = React.useState(false);
+    const [message, setMessage] = React.useState("");
+
 
     const open = Boolean(anchorEl);
     const openCart = Boolean(anchorElCart);
@@ -88,7 +105,7 @@ export default function NavAppbar(props) {
         setAnchorElCart(event.currentTarget);
         if (getJwt()) {
             getCartItems().then((response) => {
-                options = response.data;
+                setOptions(response.data);
             });
         }
     };
@@ -104,15 +121,18 @@ export default function NavAppbar(props) {
     const handleLogout = () => {
         console.log('logout invoked')
         logout();
-        console.log(history)
         handleClose();
+        setLoggedIn(false);
         history.push('/');
     }
 
     const checkOutItem = () => {
         checkoutCart().then(res => {
             if (res.status === 200) {
+                setMessage("Checkout Done !!")
                 setOpenSnack(true);
+            } else if (res.status === 404) {
+                setMessage("No Item For Checkout!!")
             }
         })
     }
@@ -120,6 +140,13 @@ export default function NavAppbar(props) {
 
 
     const ITEM_HEIGHT = 48;
+    setInterval(() => {
+        if (!loggedIn) {
+            if (getJwt()) {
+                setLoggedIn(true);
+            }
+        }
+    }, 3000);
     return (
         <>
             <Box sx={{ flexGrow: 1 }}>
@@ -130,7 +157,7 @@ export default function NavAppbar(props) {
                         </Typography>
                         <Tooltip title="Checkout"><IconButton color="inherit" onClick={() => checkOutItem()}><AddShoppingCartIcon /></IconButton></Tooltip>
                         <Tooltip title="cart"><IconButton color="inherit" onClick={(event) => handleCartClick(event)}><ShoppingCartIcon /></IconButton></Tooltip>
-                        {isLoggedIn ? <Avatar style={{ cursor: 'pointer' }} onClick={(event) => handleClick(event)} {...stringAvatar('Sagar Jain')} /> : <LoginIcon />}
+                        {loggedIn ? <Avatar style={{ cursor: 'pointer' }} onClick={(event) => handleClick(event)} {...stringAvatar('Sagar Jain')} /> : <LoginIcon />}
                         <Menu id="demo-positioned-menu"
                             aria-labelledby="demo-positioned-button"
                             anchorEl={anchorEl}
@@ -145,7 +172,7 @@ export default function NavAppbar(props) {
                                 horizontal: 'left',
                             }}
                         >
-                            <MenuItem onClick={handleClose}>My Order</MenuItem>
+                            <MenuItem onClick={handleModalOpen}>My Order</MenuItem>
                             <MenuItem onClick={handleLogout}>Logout</MenuItem>
                         </Menu>
                         <Menu
@@ -163,9 +190,9 @@ export default function NavAppbar(props) {
                                 },
                             }}
                         >
-                            {options.map((option) => (
-                                <MenuItem key={option} selected={option === 'Pyxis'} onClick={handleCloseCart}>
-                                    {option}
+                            {options?.map((option) => (
+                                <MenuItem key={option.ItemId} onClick={handleCloseCart}>
+                                    {option.ItemId} | {option.Name}
                                 </MenuItem>
                             ))}
                         </Menu>
@@ -175,8 +202,32 @@ export default function NavAppbar(props) {
             <Snackbar
                 open={openSnack}
                 onClose={handleSnackClose}
-                message="Checkout Succesfully"
+                message={message}
             />
+            <Modal
+                aria-labelledby="transition-modal-title"
+                aria-describedby="transition-modal-description"
+                open={openModal}
+                onClose={handleModalClose}
+                closeAfterTransition
+                BackdropComponent={Backdrop}
+                BackdropProps={{
+                    timeout: 500,
+                }}
+            >
+                <Fade in={open}>
+                    <Box sx={style}>
+                        <Typography id="transition-modal-title" variant="h6" component="h2">
+                            Order History
+                        </Typography>
+                        {modal?.map((el: OrderModel) => {
+                            <><Typography id="transition-modal-description" sx={{ mt: 2 }}>
+                                {el.ID}  |  {el.CreatedAt}
+                            </Typography><Divider /></>
+                        })}
+                    </Box>
+                </Fade>
+            </Modal>
         </>
     );
 }

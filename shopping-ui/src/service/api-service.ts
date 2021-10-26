@@ -5,7 +5,7 @@ export function getAllItems(offSet: number): Promise<any> {
 }
 
 export function callAuthToken(email: string, password: string): Promise<any> {
-    return authApiClient.post(`/auth/token`, email);
+    return authApiClient.post(`/auth/token`, { username: email, password: password });
 }
 
 export function getCartItems(): Promise<any> {
@@ -17,7 +17,7 @@ export function checkoutCart(): Promise<any> {
 }
 
 export function addToCart(cartId): Promise<any> {
-    return orderApiClient.post(`/cart/add`, cartId);
+    return orderApiClient.fetch(`/cart/add?cart=${cartId}`);
 }
 
 export function getOrderHistory(): Promise<any> {

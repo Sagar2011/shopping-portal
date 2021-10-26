@@ -14,13 +14,10 @@ export function saveInfo(key: string, value: any) {
 
 export function getEmail() {
     const user = localStorage.getItem('user');
-    return user;    
+    return user;
 }
 
 export function logout() {
-    const user = localStorage.getItem('user');
-    if (user !== null) {
-        console.log('logging out user');
-        localStorage.clear();
-    }
+    console.log('logging out user');
+    localStorage.clear();
 }

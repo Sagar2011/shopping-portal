@@ -24,7 +24,7 @@ import ShopLoader from '../common/loader';
 
 
 interface Auth {
-    email: string;
+    username: string;
     password: string;
     showPassword: boolean;
 }
@@ -33,7 +33,7 @@ interface Auth {
 
 function Login() {
     const [values, setValues] = React.useState<Auth>({
-        email: '',
+        username: '',
         password: '',
         showPassword: false,
     });
@@ -65,12 +65,12 @@ function Login() {
 
     const handleLogin = async () => {
         setShowLoader(true);
-        callAuthToken(values.email, values.password).then(response => {
+        callAuthToken(values.username, values.password).then(response => {
             setShowLoader(false);
             console.log('response data as ', response.data)
             if (response.data !== undefined || response.data !== null) {
-                saveInfo('jtoken', response.data.token);
-                saveInfo('user', values.email);
+                saveInfo('jtoken', response.data);
+                saveInfo('user', values.username);
                 history.push('/portal');
             } else {
                 console.log('issue with login');
@@ -111,8 +111,8 @@ function Login() {
                                         <InputLabel htmlFor="outlined-adornment-password">Email</InputLabel>
                                         <OutlinedInput
                                             id="outlined-adornment-weight"
-                                            value={values.email}
-                                            onChange={handleChange('email')}
+                                            value={values.username}
+                                            onChange={handleChange('username')}
                                             endAdornment={
                                                 <InputAdornment position="end">
                                                     <IconButton
