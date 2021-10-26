@@ -14,7 +14,7 @@ export function saveInfo(key: string, value: any) {
 
 export function getEmail() {
     const user = localStorage.getItem('user');
-    return user;
+    return user === null ? " " : user;
 }
 
 export function logout() {

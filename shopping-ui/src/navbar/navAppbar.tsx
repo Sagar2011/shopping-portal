@@ -9,7 +9,7 @@ import Typography from '@mui/material/Typography';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { getJwt, logout } from '../service/utils';
+import { getEmail, getJwt, logout } from '../service/utils';
 import LoginIcon from '@mui/icons-material/Login';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import Tooltip from '@mui/material/Tooltip';
@@ -41,7 +41,8 @@ function stringToColor(string: string) {
     return color;
 }
 
-function stringAvatar(name: string) {
+function stringAvatar() {
+    const name = getEmail();
     return {
         sx: {
             bgcolor: stringToColor(name),
@@ -134,6 +135,8 @@ export default function NavAppbar() {
             } else if (res.status === 404) {
                 setMessage("No Item For Checkout!!")
             }
+        }).catch(() => {
+            setMessage("No Item For Checkout!!")
         })
     }
 
@@ -157,7 +160,7 @@ export default function NavAppbar() {
                         </Typography>
                         <Tooltip title="Checkout"><IconButton color="inherit" onClick={() => checkOutItem()}><AddShoppingCartIcon /></IconButton></Tooltip>
                         <Tooltip title="cart"><IconButton color="inherit" onClick={(event) => handleCartClick(event)}><ShoppingCartIcon /></IconButton></Tooltip>
-                        {loggedIn ? <Avatar style={{ cursor: 'pointer' }} onClick={(event) => handleClick(event)} {...stringAvatar('Sagar Jain')} /> : <LoginIcon />}
+                        {loggedIn ? <Avatar style={{ cursor: 'pointer' }} onClick={(event) => handleClick(event)} {...stringAvatar()} /> : <LoginIcon />}
                         <Menu id="demo-positioned-menu"
                             aria-labelledby="demo-positioned-button"
                             anchorEl={anchorEl}
@@ -215,7 +218,7 @@ export default function NavAppbar() {
                     timeout: 500,
                 }}
             >
-                <Fade in={open}>
+                <Fade in={openModal}>
                     <Box sx={style}>
                         <Typography id="transition-modal-title" variant="h6" component="h2">
                             Order History

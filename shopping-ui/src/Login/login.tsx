@@ -19,7 +19,7 @@ import { useHistory } from 'react-router-dom';
 import { saveInfo, logout } from '../service/utils';
 import { useEffect } from 'react';
 import Alert from '@mui/material/Alert';
-import { callAuthToken } from '../service/api-service';
+import { callAuthToken, registerUser } from '../service/api-service';
 import ShopLoader from '../common/loader';
 
 
@@ -40,13 +40,16 @@ function Login() {
 
     const [openSnack, setOpenSnack] = React.useState(false);
     const [showLoader, setShowLoader] = React.useState(false);
+    const [message, setMessage] = React.useState("");
 
     const handleCloseSnack = () => {
         setOpenSnack(false);
+        setMessage("")
     };
 
-    const handleOpenSnack = () => {
+    const handleOpenSnack = (msg) => {
         setOpenSnack(true);
+        setMessage(msg)
     };
 
     useEffect(() => {
@@ -63,26 +66,46 @@ function Login() {
         setValues({ ...values, [prop]: event.target.value });
     };
 
-    const handleLogin = async () => {
+    const handleLogin = (typeCall) => {
         setShowLoader(true);
-        callAuthToken(values.username, values.password).then(response => {
-            setShowLoader(false);
-            console.log('response data as ', response.data)
-            if (response.data !== undefined || response.data !== null) {
-                saveInfo('jtoken', response.data);
-                saveInfo('user', values.username);
-                history.push('/portal');
-            } else {
-                console.log('issue with login');
-                handleOpenSnack();
+        if (typeCall === 'login') {
+            callAuthToken(values.username, values.password).then(response => {
+                setShowLoader(false);
+                if (response.data !== undefined || response.data !== null) {
+                    saveInfo('jtoken', response.data);
+                    saveInfo('user', values.username);
+                    history.push('/portal');
+                } else {
+                    console.log('issue with login');
+                    handleOpenSnack("UnAuthorized Attempt");
+                    logout();
+                }
+            }).catch(err => {
+                console.error('error in the login part!!!', err)
+                setShowLoader(false);
+                handleOpenSnack("Error at login Stage");
                 logout();
-            }
-        }).catch(err => {
-            console.error('error in the login part!!!', err)
-            setShowLoader(false);
-            handleOpenSnack();
-            logout();
-        });
+            });
+        } else {
+            registerUser(values.username, values.password).then(response => {
+                setShowLoader(false);
+                if (response.data === "used") {
+                    console.log('issue with login');
+                    handleOpenSnack("Email Already in use");
+                    logout();
+                }
+                else {
+                    saveInfo('jtoken', response.data);
+                    saveInfo('user', values.username);
+                    history.push('/portal');
+                }
+            }).catch(err => {
+                console.error('error in the login part!!!', err)
+                setShowLoader(false);
+                handleOpenSnack("Error at register Stage");
+                logout();
+            });
+        }
     }
 
     const urlPath = 'url(https://cdn.dribbble.com/users/3274928/screenshots/6712339/dribbble-06.jpg)';
@@ -158,7 +181,7 @@ function Login() {
                                     variant="contained"
                                     color="primary"
                                     startIcon={<LockOpenIcon />}
-                                    onClick={handleLogin}
+                                    onClick={() => handleLogin("login")}
                                 >
                                     Login
                                 </Button>
@@ -169,8 +192,9 @@ function Login() {
                                     variant="contained"
                                     color="secondary"
                                     startIcon={<ContactSupportIcon />}
+                                    onClick={() => handleLogin("register")}
                                 >
-                                    Forgot
+                                    Register
                                 </Button>
                             </Box>
                         </CardActions>
@@ -180,7 +204,7 @@ function Login() {
             <Box display="flex" justifyContent="center" m={1} p={1}>
                 <Snackbar open={openSnack} autoHideDuration={3000} onClose={handleCloseSnack} style={{ position: 'sticky' }}>
                     <Alert onClose={handleCloseSnack} severity="error">
-                        UnAuthorized Attempt to Login!
+                        {message}
                     </Alert>
                 </Snackbar>
             </Box>

@@ -25,15 +25,15 @@ func removeDuplicateValues(intSlice []int64) []int64 {
 	return list
 }
 
-func GetUser(db *gorm.DB) ([]User, error) {
-	users := []User{}
-	query := db.Select("*")
-	if err := query.Find(&users).Error; err != nil {
-		return users, err
+func CreateUser(email string, password string, db *gorm.DB) (bool, error) {
+	_ = db.Model(&Cart{}).Save(Cart{Username: email, Is_purchased: false})
+	err := db.Model(&User{}).Save(User{Username: email, Password: password})
+	if err != nil {
+		return false, err.Error
 	}
-
-	return users, nil
+	return true, nil
 }
+
 func GetUserByEmail(email string, db *gorm.DB) (User, bool, error) {
 	b := User{}
 
@@ -82,37 +82,28 @@ func GetCarts(db *gorm.DB, username string) ([]CartItem, error) {
 
 func UpdateCart(db *gorm.DB, username string, id int64) error {
 	carts, _ := GetCarts(db, username)
+	fmt.Println("car", carts)
 	var Vcarts []int64
-	if len(carts) > 0 {
-		for _, v := range carts {
-			Vcarts = append(Vcarts, v.ItemId)
-		}
-		Vcarts = append(Vcarts, id)
-		Vcarts = removeDuplicateValues(Vcarts)
-		fmt.Println("v", Vcarts)
-		err := db.Model(&Cart{}).Where("carts.username = ?", username).Update("items", Vcarts)
-		if err.Error != nil {
-			return err.Error
-		}
-		return nil
-	} else {
-		x := []int64{id}
-		cart := Cart{Username: username, Items: x}
-		db.Create(&cart)
-		return nil
+	for _, v := range carts {
+		Vcarts = append(Vcarts, v.ItemId)
 	}
+	Vcarts = append(Vcarts, id)
+	Vcarts = removeDuplicateValues(Vcarts)
+	fmt.Println("v", Vcarts)
+	err := db.Model(&Cart{}).Where("carts.username = ?", username).Updates(Cart{Items: Vcarts, Is_purchased: false})
+	if err.Error != nil {
+		return err.Error
+	}
+	return nil
 }
 
 func OrderCart(db *gorm.DB, username string) error {
 	cart := Cart{}
 	carts := db.Select("*").Where("carts.username = ?", username).Where("carts.is_purchased = ?", false).Find(&cart)
-	user := User{}
-	users := db.Select("*").Where("carts.username = ?", username).Find(&user)
-	fmt.Println(users)
 	if carts.RowsAffected == 1 {
-		order := Order{CartId: int(cart.ID), Username: user.Username}
-		err := db.Model(&Cart{}).Save(&order)
-		_ = db.Model(&Cart{}).Where("carts.username = ?", username).Update("is_purchased", true)
+		order := Order{CartId: int(cart.ID), Username: username}
+		err := db.Model(&Order{}).Save(&order)
+		_ = db.Model(&Cart{}).Where("carts.username = ?", username).Updates(Cart{Is_purchased: true, Items: nil})
 		if err.Error != nil {
 			return err.Error
 		}
@@ -124,9 +115,7 @@ func OrderCart(db *gorm.DB, username string) error {
 
 func OrderHistory(db *gorm.DB, username string) ([]Order, error) {
 	orders := []Order{}
-	user := User{}
-	_ = db.Select("*").Where("carts.username = ?", username).Find(&user)
-	query := db.Select("*").Where("orders.user_id", user)
+	query := db.Select("*").Where("orders.username", username)
 	if err := query.Find(&orders).Error; err != nil {
 		return nil, err
 	}

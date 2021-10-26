@@ -84,16 +84,6 @@ func checkTokenExistValid(c *gin.Context) (bool, string) {
 	return false, ""
 }
 
-func (a *APIEnv) GetUsers(c *gin.Context) {
-	users, err := entity.GetUser(a.DB)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	c.JSON(http.StatusOK, users)
-}
-
 func (a *APIEnv) VerifyUser(c *gin.Context) {
 	var u entity.User
 	if err := c.ShouldBindJSON(&u); err != nil {
@@ -116,6 +106,28 @@ func (a *APIEnv) VerifyUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, token)
+}
+
+func (a *APIEnv) RegsiterUser(c *gin.Context) {
+	var u entity.User
+	if err := c.ShouldBindJSON(&u); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
+		return
+	}
+	_, found, err := entity.GetUserByEmail(u.Username, a.DB)
+	if found {
+		c.JSON(http.StatusOK, "used")
+		return
+	} else if !found {
+		done, er := entity.CreateUser(u.Username, u.Password, a.DB)
+		if done {
+			a.VerifyUser(c)
+		} else {
+			c.JSON(http.StatusInternalServerError, er)
+			return
+		}
+	}
+	c.JSON(http.StatusUnauthorized, err)
 }
 
 func (a *APIEnv) GetItems(c *gin.Context) {

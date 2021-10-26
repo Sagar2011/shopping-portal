@@ -13,8 +13,8 @@ func Setup() *gin.Engine {
 		DB: entity.GetDB(),
 	}
 
-	r.GET("", api.GetUsers)
 	r.POST("/shopper/auth/token", api.VerifyUser)
+	r.POST("/shopper/user/register", api.RegsiterUser)
 	r.GET("/shopper/item/list", api.GetItems)
 	r.GET("/shopper/cart/list", api.GetCarts)
 	r.GET("/shopper/cart/add", api.UpdateCarts)

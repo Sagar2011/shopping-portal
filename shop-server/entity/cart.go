@@ -8,7 +8,7 @@ import (
 type Cart struct {
 	gorm.Model
 	Items        pq.Int64Array `gorm:"type:integer[]"`
-	Username     string
+	Username     string        `gorm:"unique"`
 	Is_purchased bool
-	User         User `gorm:"foreignKey:Username"`
+	User         User `gorm:"foreignKey:Username;references:Username"`
 }

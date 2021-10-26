@@ -8,6 +8,10 @@ export function callAuthToken(email: string, password: string): Promise<any> {
     return authApiClient.post(`/auth/token`, { username: email, password: password });
 }
 
+export function registerUser(email: string, password: string): Promise<any> {
+    return authApiClient.post(`/user/register`, { username: email, password: password });
+}
+
 export function getCartItems(): Promise<any> {
     return orderApiClient.fetch(`/cart/list`);
 }
