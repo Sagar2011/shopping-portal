@@ -12,3 +12,5 @@ services:
       TEMPLATE: template0
     ports:
       - "5432:5432"
+    volumes:
+      - ./shop-data:/var/lib/postgresql/data
