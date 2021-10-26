@@ -119,6 +119,10 @@ http {
 run the main.go file using command as go run main.go
 ```
 
+## Look:
+
+![Shoppin_Poprtal](https://github.com/Sagar2011/shopping-portal/blob/main/Screenshot%20from%202021-10-26%2012-29-53.png)
+
 ## QNA:
 
 1. Nginx?: To avoid issue like CORS and making nginx to work here as API Gateway working and transferring the service call based on configuration.
